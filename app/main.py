@@ -9,7 +9,7 @@ from project_context import ProjectContext
 
 class App:
     def __init__(self):
-        cfg = ConfigStore("config.json").load()
+        cfg = ConfigStore().load()
 
         self.state_refresh_sec = int(cfg.get("polling", {}).get("state_refresh_sec", 15))
 
@@ -31,8 +31,8 @@ class App:
         self.bridge = LocalMqttBridge(
             host=cfg["mqtt"]["host"],
             port=int(cfg["mqtt"]["port"]),
-            username=cfg["mqtt"]["username"],
-            password=cfg["mqtt"]["password"],
+            username=cfg["mqtt"].get("username", ""),
+            password=cfg["mqtt"].get("password", ""),
             on_switch_command=self.handle_switch_command,
         )
 
