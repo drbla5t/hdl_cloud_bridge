@@ -1,0 +1,42 @@
+name: "HDL Cloud Bridge"
+version: "0.1.0"
+slug: "hdl_cloud_bridge"
+description: "HDL Cloud to Home Assistant bridge via MQTT Discovery"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: services
+boot: auto
+host_network: true
+init: false
+
+options:
+  hdl:
+    base_url: "https://ru-gateway.hdlcontrol.com"
+    app_key: ""
+    app_secret: ""
+    project_id: ""
+    home_id: 0
+  mqtt:
+    host: "core-mosquitto"
+    port: 1883
+    username: ""
+    password: ""
+  polling:
+    state_refresh_sec: 15
+
+schema:
+  hdl:
+    base_url: str
+    app_key: str
+    app_secret: password
+    project_id: str
+    home_id: int
+  mqtt:
+    host: str
+    port: int
+    username: str?
+    password: password?
+  polling:
+    state_refresh_sec: int
