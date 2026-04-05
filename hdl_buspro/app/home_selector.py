@@ -1,23 +1,16 @@
-def select_homes(all_homes, required_names):
-    if not required_names:
-        raise RuntimeError(
-            "HDL_HOME_NAMES is empty. You must explicitly specify one or more HDL object names."
-        )
+class HomeSelector:
+    def __init__(self, hdl):
+        self.hdl = hdl
 
-    selected = []
-    missing = []
+    def select(self):
+        homes = self.hdl.get_homes()
 
-    for name in required_names:
-        found = next((h for h in all_homes if h.get("homeName") == name), None)
-        if found:
-            selected.append(found)
-        else:
-            missing.append(name)
+        if not homes:
+            raise Exception("No homes found")
 
-    if missing:
-        available = [h.get("homeName", "") for h in all_homes]
-        raise RuntimeError(
-            f"HDL homes not found: {missing}. Available homes: {available}"
-        )
+        print("\nAvailable HDL homes:")
+        for i, h in enumerate(homes):
+            print(f"{i}: {h['homeName']} ({h['homeId']})")
 
-    return selected
+        # пока берём первый (потом можно сделать выбор через config)
+        return homes[0]
