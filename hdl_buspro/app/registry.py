@@ -27,4 +27,4 @@ DEVICE_REGISTRY = {
         "state": state_climate.publish,
         "discovery": disc_climate.build,
     },
-}]
+}
