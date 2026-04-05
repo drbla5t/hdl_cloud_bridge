@@ -54,7 +54,9 @@ class App:
         selector = HomeSelector(self.hdl, config.HDL_HOME_NAMES)
         self.homes = selector.select()
 
-        print("Selected home:", self.home["homeName"])
+        print("Selected homes:")
+        for h in self.homes:
+            print(f" - {h['homeName']} ({h['homeId']})")
 
         self.mqtt.connect()
 
@@ -62,15 +64,19 @@ class App:
             self.devices = []
 
             for home in self.homes:
-                devices = self.hdl.get_devices(home["homeId"])
+                try:
+                    devices = self.hdl.get_devices(home["homeId"])
 
-                for d in devices:
-                    d["_home_name"] = home["homeName"]
+                    for d in devices:
+                        d["_home_name"] = home["homeName"]
+                        d["_home_id"] = home["homeId"]
 
-                self.devices.extend(devices)
+                        self.devices.append(d)
+                        self.discovery.publish(d)
+                        self.state.publish(d)
 
-                self.discovery.publish(d)
-                self.state.publish(d)
+                except Exception as e:
+                    print(f"Failed to sync home {home['homeName']}: {e}")
 
             time.sleep(int(os.getenv("POLL_INTERVAL", 5)))
 
