@@ -49,11 +49,11 @@ class App:
         print(f"CMD → {device['name']} ({device_uid}) → {cmd}")
         
         self.hdl.control(
-            home_id=device["homeId"],
-            gateway_id=device["gatewayId"],
-            device_id=device["deviceId"],
-            key=cmd["key"],
-            value=cmd["value"],
+            device["homeId"],
+            device["gatewayId"],
+            device,
+            cmd["key"],
+            cmd["value"],
         )
 
     def start(self):

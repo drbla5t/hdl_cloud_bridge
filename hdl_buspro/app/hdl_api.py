@@ -125,9 +125,3 @@ class HDLClient:
         print("HDL CONTROL RESPONSE:")
         print(json.dumps(res, ensure_ascii=False, indent=2))
         return res
-        
-        time.sleep(POLL_INTERVAL)
-        devices = self.hdl.get_devices(self.home_id)
-
-        d = next(x for x in devices if x["deviceId"] == device["deviceId"])
-        print("AFTER:", d.get("status"))
