@@ -1,4 +1,8 @@
 import os
+import json
+
+
+HDL_HOME_NAMES = json.loads(os.getenv("HDL_HOME_NAMES", "[]"))
 
 USERNAME = os.getenv("HDL_USER", "")
 PASSWORD = os.getenv("HDL_PASS", "")
@@ -10,6 +14,4 @@ MQTT_PASS = os.getenv("MQTT_PASS", "")
 
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "5"))
 
-HDL_HOME_NAMES = [
-    x.strip() for x in os.getenv("HDL_HOME_NAMES", "").split(",") if x.strip()
-]
+
