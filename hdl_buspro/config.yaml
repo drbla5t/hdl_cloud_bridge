@@ -1,10 +1,15 @@
 name: HDL Buspro Bridge
 version: "1.0.0"
 slug: hdl_buspro
-description: HDL Buspro → MQTT → Home Assistant
+description: HDL Buspro to MQTT bridge for Home Assistant
 startup: services
 boot: auto
 init: false
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
 
 options:
   hdl_user: ""
@@ -14,6 +19,7 @@ options:
   mqtt_user: ""
   mqtt_pass: ""
   poll_interval: 5
+  home_names: []
 
 schema:
   hdl_user: str
@@ -23,8 +29,8 @@ schema:
   mqtt_user: str?
   mqtt_pass: password?
   poll_interval: int
+  home_names:
+    - str
 
-arch:
-  - amd64
-  - aarch64
-  - armv7
+map:
+  - config:rw

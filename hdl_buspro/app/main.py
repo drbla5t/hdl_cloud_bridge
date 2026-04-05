@@ -7,6 +7,7 @@ from app.discovery import Discovery
 from app.state_publisher import StatePublisher
 from app.command_router import CommandRouter
 from app.home_selector import HomeSelector
+import app.config as config
 
 
 class App:
@@ -21,7 +22,7 @@ class App:
         self.state = StatePublisher(self.mqtt)
         self.router = CommandRouter()
 
-        self.home = None
+        self.homes = []
 
     def handle_command(self, device_id, payload):
         device = next(
@@ -49,18 +50,23 @@ class App:
         print("🔐 Login...")
         self.hdl.login()
 
-        selector = HomeSelector(self.hdl)
-        self.home = selector.select()
+        selector = HomeSelector(self.hdl, config.HDL_HOME_NAMES)
+        self.homes = selector.select()
 
         print("Selected home:", self.home["homeName"])
 
         self.mqtt.connect()
 
         while True:
-            self.devices = self.hdl.get_devices(self.home["homeId"])
+            self.devices = []
 
-            for d in self.devices:
-                d["_home_name"] = self.home["homeName"]
+            for home in self.homes:
+                devices = self.hdl.get_devices(home["homeId"])
+
+                for d in devices:
+                    d["_home_name"] = home["homeName"]
+
+                self.devices.extend(devices)
 
                 self.discovery.publish(d)
                 self.state.publish(d)
