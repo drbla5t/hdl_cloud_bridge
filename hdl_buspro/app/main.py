@@ -10,6 +10,7 @@ from app.home_selector import HomeSelector
 import app.config as config
 
 
+
 class App:
     def __init__(self):
         self.hdl = HDLClient(
@@ -17,7 +18,7 @@ class App:
             os.getenv("HDL_PASS"),
         )
 
-        self.mqtt = MQTTBridge(self, self.handle_command)
+        self.mqtt = MQTTBridge(config, self.handle_command)
         self.discovery = Discovery(self.mqtt)
         self.state = StatePublisher(self.mqtt)
         self.router = CommandRouter()
