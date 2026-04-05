@@ -22,25 +22,34 @@ class App:
         self.discovery = Discovery(self.mqtt)
         self.state = StatePublisher(self.mqtt)
         self.router = CommandRouter()
+        self.discovery_sent = set()
 
         self.homes = []
 
-    def handle_command(self, device_id, payload):
+    def handle_command(self, device_uid, payload):
+        
+        devices = getattr(self, "devices", [])
+
         device = next(
-            (d for d in self.devices if d.get("deviceIotId") == device_id),
+            (
+                d for d in devices
+                if d.get("deviceIotId") == device_uid or d.get("deviceId") == device_uid
+            ),
             None,
         )
 
         if not device:
-            print("Device not found:", device_id)
+            print(f"Device not found for command: {device_uid}")
             return
 
         cmd = self.router.handle(device, payload)
         if not cmd:
             return
-
+        
+        print(f"CMD → {device['name']} ({device_uid}) → {cmd}")
+        
         self.hdl.control(
-            home_id=self.home["homeId"],
+            home_id=device["homeId"],
             gateway_id=device["gatewayId"],
             device_id=device["deviceId"],
             key=cmd["key"],
