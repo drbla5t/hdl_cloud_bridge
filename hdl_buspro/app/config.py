@@ -1,4 +1,5 @@
 import os
+import json
 
 USERNAME = os.getenv("HDL_USERNAME", "")
 PASSWORD = os.getenv("HDL_PASSWORD", "")
@@ -19,4 +20,12 @@ HDL_SERVERS = {
 HDL_SERVER = os.getenv("HDL_SERVER", "ru").strip().lower()
 
 _raw_home_names = os.getenv("HDL_HOME_NAMES", "").strip()
-HDL_HOME_NAMES = [x.strip() for x in _raw_home_names.split(",") if x.strip()]
+
+try:
+    parsed = json.loads(_raw_home_names) if _raw_home_names else []
+    if isinstance(parsed, list):
+        HDL_HOME_NAMES = [str(x).strip() for x in parsed if str(x).strip()]
+    else:
+        HDL_HOME_NAMES = []
+except Exception:
+    HDL_HOME_NAMES = [x.strip() for x in _raw_home_names.split(",") if x.strip()]
