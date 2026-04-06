@@ -82,12 +82,17 @@ class App:
         if not cmd:
             return
 
+        if isinstance(cmd, list):
+            attrs = cmd
+        else:
+            attrs = [cmd]
+
         print(
             f"HDL TX home={device['_home_name']} "
             f"gateway={device['gatewayId']} "
             f"deviceId={device['deviceId']} "
             f"spk={device['spk']} "
-            f"key={cmd['key']} value={cmd['value']}"
+            f"attrs={attrs}"
         )
 
         try:
@@ -95,8 +100,7 @@ class App:
                 home_id=device["_home_id"],
                 gateway_id=device["gatewayId"],
                 device=device,
-                key=cmd["key"],
-                value=cmd["value"],
+                attrs=attrs,
             )
 
             # быстрый refresh только по дому устройства

@@ -183,12 +183,24 @@ class HDLClient:
             raise RuntimeError(f"get_devices failed: {data}")
         return data.get("data", {}).get("list", [])
 
-    def control(self, home_id, gateway_id, device, key, value):
-        attr = next(
-            (a for a in device.get("attributes", []) if a.get("key") == key),
-            None,
-        )
-        data_type = attr.get("data_type", "string") if attr else "string"
+    def control(self, home_id, gateway_id, device, attrs):
+        prepared_attrs = []
+
+        for item in attrs:
+            key = item["key"]
+            value = item["value"]
+
+            attr = next(
+                (a for a in device.get("attributes", []) if a.get("key") == key),
+                None,
+            )
+            data_type = attr.get("data_type", "string") if attr else "string"
+
+            prepared_attrs.append({
+                "key": key,
+                "value": str(value),
+                "data_type": data_type,
+            })
 
         payload = {
             "homeId": home_id,
@@ -197,13 +209,7 @@ class HDLClient:
                 {
                     "deviceId": device["deviceId"],
                     "spk": device["spk"],
-                    "attributes": [
-                        {
-                            "key": key,
-                            "value": str(value),
-                            "data_type": data_type,
-                        }
-                    ],
+                    "attributes": prepared_attrs,
                 }
             ],
         }
