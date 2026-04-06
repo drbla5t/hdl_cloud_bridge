@@ -1,4 +1,5 @@
 import hashlib
+import json
 import time
 import requests
 
@@ -61,137 +62,25 @@ class HDLClient:
 
         return [self.servers[self.selected_server]]
 
-    def _auth_headers(self):
+    def _auth_headers(self, auth=True):
         headers = {"Content-Type": "application/json"}
-        if self.access_token:
+        if auth and self.access_token:
             headers["Authorization"] = f"{self.header_prefix}{self.access_token}"
         return headers
 
-    def login(self):
-        print("🔐 Login...")
-        last_error = None
-
-        login_variants = [
-            {
-                "account": self.username,
-                "password": self.password,
-                "grantType": "password",
-            },
-            {
-                "account": self.username,
-                "password": self.password,
-                "grant_type": "password",
-            },
-            {
-                "account": self.username,
-                "password": self.password,
-                "authType": "password",
-            },
-            {
-                "account": self.username,
-                "password": self.password,
-                "loginType": "password",
-            },
-            {
-                "account": self.username,
-                "password": self.password,
-            },
-        ]
-
-        for server in self._server_candidates():
-            self.base_url = server.rstrip("/")
-            print(f"Trying HDL server: {self.base_url}")
-
-            for payload_base in login_variants:
-                try:
-                    url = f"{self.base_url}/smart-footstone/member/oauth/login"
-                    payload = _sign(payload_base)
-
-                    resp = self.session.post(
-                        url,
-                        json=payload,
-                        headers={"Content-Type": "application/json"},
-                        timeout=30,
-                    )
-                    print(f"/smart-footstone/member/oauth/login -> {resp.status_code}")
-
-                    data = resp.json()
-
-                    if data.get("code") == 0:
-                        token_data = data["data"]
-                        self.access_token = token_data.get("accessToken")
-                        self.refresh_token = token_data.get("refreshToken")
-                        self.header_prefix = token_data.get("headerPrefix") or "Bearer "
-                        if not self.header_prefix.endswith(" "):
-                            self.header_prefix += " "
-
-                        print(f"✅ Logged in via {self.base_url}")
-                        return
-
-                    last_error = data
-                    print(f"Login variant failed: {payload_base} -> {data}")
-
-                except Exception as e:
-                    last_error = e
-                    print(f"Login error with payload {payload_base}: {e}")
-
-        raise RuntimeError(f"HDL login failed: {last_error}")
-
-    def refresh_access_token(self):
-        if not self.refresh_token:
-            print("No refresh token, relogin...")
-            self.login()
-            return
-
-        print("🔄 Refresh token...")
-        url = f"{self.base_url}/smart-footstone/member/oauth/refreshToken"
-        payload = _sign({
-            "refreshToken": self.refresh_token
-        })
-
-        try:
-            resp = self.session.post(
-                url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=30,
-            )
-            print(f"/smart-footstone/member/oauth/refreshToken -> {resp.status_code}")
-            data = resp.json()
-        except Exception as e:
-            print(f"Refresh request failed: {e}")
-            print("Refresh failed, relogin...")
-            self.login()
-            return
-
-        if data.get("code") != 0:
-            print(f"Refresh failed: {data}")
-            print("Refresh failed, relogin...")
-            self.login()
-            return
-
-        token_data = data["data"]
-        self.access_token = token_data.get("accessToken")
-        self.refresh_token = token_data.get("refreshToken", self.refresh_token)
-        self.header_prefix = token_data.get("headerPrefix") or "Bearer "
-        if not self.header_prefix.endswith(" "):
-            self.header_prefix += " "
-
-        print("✅ Token refreshed")
-
-    def _request(self, method, path, *, json_data=None, retry=True):
+    def _request(self, method, path, *, json_data=None, auth=True, retry=True):
         if not self.base_url:
-            raise RuntimeError("HDL client is not logged in")
+            raise RuntimeError("HDL client is not initialized")
 
         url = f"{self.base_url}{path}"
-        signed_payload = _sign(json_data or {})
+        payload = _sign(json_data or {})
 
         try:
             resp = self.session.request(
                 method=method,
                 url=url,
-                json=signed_payload,
-                headers=self._auth_headers(),
+                json=payload,
+                headers=self._auth_headers(auth=auth),
                 timeout=30,
             )
         except requests.RequestException as e:
@@ -207,45 +96,131 @@ class HDLClient:
                 f"Non-JSON response for {path}: HTTP {resp.status_code}, body={text[:500]}"
             ) from e
 
-        if data.get("code") == 10001 and retry:
-            print("⚠️ Session expired, refreshing token...")
-            self.refresh_access_token()
-            return self._request(method, path, json_data=json_data, retry=False)
+        if auth and data.get("code") == 10001 and retry:
+            print("⚠️ Session expired, trying relogin...")
+            self.login()
+            return self._request(
+                method,
+                path,
+                json_data=json_data,
+                auth=auth,
+                retry=False,
+            )
 
         return data
 
+    def login(self):
+        print("🔐 Login...")
+        last_error = None
+
+        for server in self._server_candidates():
+            try:
+                self.base_url = server.rstrip("/")
+                print(f"Trying HDL server: {self.base_url}")
+
+                payload = {
+                    "account": self.username,
+                    "loginPwd": self.password,
+                    "grantType": "password",
+                }
+
+                data = self._request(
+                    "POST",
+                    "/smart-footstone/member/oauth/login",
+                    json_data=payload,
+                    auth=False,
+                    retry=False,
+                )
+
+                print("LOGIN RESPONSE:")
+                print(json.dumps(data, ensure_ascii=False, indent=2))
+
+                if data.get("code") != 0 or not data.get("data"):
+                    last_error = data
+                    print(f"Login failed on {self.base_url}: {data}")
+                    continue
+
+                token_data = data["data"]
+                self.access_token = token_data.get("accessToken")
+                self.refresh_token = token_data.get("refreshToken")
+                self.header_prefix = token_data.get("headerPrefix") or "Bearer "
+                if not self.header_prefix.endswith(" "):
+                    self.header_prefix += " "
+
+                print(f"✅ Logged in via {self.base_url}")
+                return
+
+            except Exception as e:
+                last_error = e
+                print(f"Login error on {server}: {e}")
+
+        raise RuntimeError(f"HDL login failed: {last_error}")
+
     def get_homes(self):
-        data = self._request("GET", "/home-wisdom/app/home/list")
+        data = self._request(
+            "POST",
+            "/home-wisdom/app/home/list",
+            json_data={
+                "homeType": "ALL",
+                "autoGenerate": False,
+            },
+        )
         if data.get("code") != 0:
             raise RuntimeError(f"get_homes failed: {data}")
         return data.get("data", [])
 
     def get_devices(self, home_id):
-        payload = {
-            "homeId": home_id,
-            "pageNum": 1,
-            "pageSize": 500,
-        }
-        data = self._request("POST", "/home-wisdom/app/device/list", json_data=payload)
+        data = self._request(
+            "POST",
+            "/home-wisdom/app/device/list",
+            json_data={
+                "homeId": home_id,
+                "pageNo": 1,
+                "pageSize": 200,
+            },
+        )
         if data.get("code") != 0:
             raise RuntimeError(f"get_devices failed: {data}")
         return data.get("data", {}).get("list", [])
 
     def control(self, home_id, gateway_id, device, key, value):
+        attr = next(
+            (a for a in device.get("attributes", []) if a.get("key") == key),
+            None,
+        )
+        data_type = attr.get("data_type", "string") if attr else "string"
+
         payload = {
             "homeId": home_id,
             "gatewayId": gateway_id,
-            "deviceId": device["deviceId"],
-            "spk": device["spk"],
-            "attributes": [
+            "actions": [
                 {
-                    "key": key,
-                    "value": value,
+                    "deviceId": device["deviceId"],
+                    "spk": device["spk"],
+                    "attributes": [
+                        {
+                            "key": key,
+                            "value": str(value),
+                            "data_type": data_type,
+                        }
+                    ],
                 }
             ],
         }
 
-        data = self._request("POST", "/home-wisdom/app/device/control", json_data=payload)
+        print("HDL CONTROL REQUEST:")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+        data = self._request(
+            "POST",
+            "/home-wisdom/app/device/control",
+            json_data=payload,
+        )
+
+        print("HDL CONTROL RESPONSE:")
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+
         if data.get("code") != 0:
             raise RuntimeError(f"control failed: {data}")
+
         return data
