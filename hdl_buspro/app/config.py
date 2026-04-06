@@ -17,3 +17,6 @@ HDL_SERVERS = {
 }
 
 HDL_SERVER = os.getenv("HDL_SERVER", "ru").strip().lower()
+
+_raw_home_names = os.getenv("HDL_HOME_NAMES", "").strip()
+HDL_HOME_NAMES = [x.strip() for x in _raw_home_names.split(",") if x.strip()]
