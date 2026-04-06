@@ -1,17 +1,19 @@
 import os
-import json
 
+USERNAME = os.getenv("HDL_USERNAME", "")
+PASSWORD = os.getenv("HDL_PASSWORD", "")
 
-HDL_HOME_NAMES = json.loads(os.getenv("HDL_HOME_NAMES", "[]"))
-
-USERNAME = os.getenv("HDL_USER", "")
-PASSWORD = os.getenv("HDL_PASS", "")
-
-MQTT_HOST = os.getenv("MQTT_HOST", "192.168.1.25")
+MQTT_HOST = os.getenv("MQTT_HOST", "core-mosquitto")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_USER = os.getenv("MQTT_USER", "")
 MQTT_PASS = os.getenv("MQTT_PASS", "")
 
-POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "5"))
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "15"))
 
+HDL_SERVERS = {
+    "ru": "https://ru-gateway.hdlcontrol.com",
+    "china": "https://nearest.hdlcontrol.com",
+    "bahrain": "https://bahrain-gateway.hdlcontrol.com",
+}
 
+HDL_SERVER = os.getenv("HDL_SERVER", "ru").strip().lower()
