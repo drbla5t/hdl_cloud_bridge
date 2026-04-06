@@ -7,7 +7,7 @@ import json
 BASE_URL = "https://ru-gateway.hdlcontrol.com"
 APP_KEY = "CXZMMOCF"
 SECRET = "CXZMMOCVCXZMMODL"
-POLL_INTERVAL = 5
+POLL_INTERVAL = 15
 
 def _is_signable(value):
     return isinstance(value, (str, int, float, bool)) and value != ""
