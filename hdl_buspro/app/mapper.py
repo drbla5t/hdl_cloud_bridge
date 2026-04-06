@@ -17,3 +17,4 @@ def map_state(device):
         }
 
     return state
+1

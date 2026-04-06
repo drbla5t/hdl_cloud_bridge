@@ -82,3 +82,4 @@ class MQTTBridge:
             payload = str(payload)
 
         self.client.publish(topic, payload, retain=retain)
+        1

@@ -8,3 +8,4 @@ def handle_generic_command(device, payload):
         "key": "on_off",
         "value": "on" if raw_value in ["on", "1", "true"] else "off",
     }
+1

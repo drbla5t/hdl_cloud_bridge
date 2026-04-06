@@ -230,3 +230,4 @@ class HDLClient:
             raise RuntimeError(f"control failed: {data}")
 
         return data
+    1

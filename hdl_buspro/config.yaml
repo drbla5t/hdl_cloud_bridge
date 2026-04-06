@@ -32,3 +32,4 @@ schema:
   mqtt_pass: str?
   poll_interval: int
   home_names: str
+  1

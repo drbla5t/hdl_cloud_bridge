@@ -93,3 +93,4 @@ def handle_light_command(device, payload):
             return None
 
     return None
+1

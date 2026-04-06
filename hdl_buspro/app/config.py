@@ -29,3 +29,4 @@ try:
         HDL_HOME_NAMES = []
 except Exception:
     HDL_HOME_NAMES = [x.strip() for x in _raw_home_names.split(",") if x.strip()]
+    1

@@ -50,3 +50,4 @@ class CommandRouter:
             return DEVICE_REGISTRY.get("other.*")
 
         return None
+    1

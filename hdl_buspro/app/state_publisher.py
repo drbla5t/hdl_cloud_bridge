@@ -85,3 +85,4 @@ class StatePublisher:
             result[key] = value
 
         return result
+    1
