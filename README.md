@@ -54,11 +54,12 @@ poll_interval: 10
 home_names:
   - your_home_name
 ```
-
+```yaml
 hdl_server names:
-ru - Russia
-bahrain - Bahrain
-china - China
+ru: - Russia
+bahrain: - Bahrain
+china: - China
+```
 
 4.	Start the add-on
 
