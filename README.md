@@ -62,3 +62,10 @@ china - China
 
 4.	Start the add-on
 
+## ☕ Support the project
+
+<p align="center">
+  <img src="assets/qrCode.png" width="220"><br><br>
+  <b>Scan QR to support development</b><br>
+  Your support helps improve the HDL Buspro integration 🙌
+</p>
