@@ -1,7 +1,11 @@
 name: HDL Buspro Bridge
-version: "1.2"
+version: "1.2.0"
 slug: hdl_buspro
-description: HDL Buspro to MQTT bridge for Home Assistant
+
+description: >
+  Bridge between HDL Buspro Cloud and Home Assistant via MQTT.
+  Supports lights, curtains, HVAC (AC & floor heating) with auto-discovery.
+
 startup: services
 boot: auto
 init: false
@@ -11,24 +15,36 @@ arch:
   - aarch64
   - armv7
 
+panel_icon: mdi:home-automation
+panel_title: HDL Buspro
+
 options:
   hdl_user: ""
   hdl_pass: ""
+
   hdl_server: "ru"
+
   mqtt_host: "core-mosquitto"
   mqtt_port: 1883
   mqtt_user: ""
   mqtt_pass: ""
-  poll_interval: 5
-  home_names: ""
+
+  poll_interval: 10
+
+  home_names: []
 
 schema:
   hdl_user: str
   hdl_pass: str
-  hdl_server: str
+
+  hdl_server: list(ru|china|bahrain)
+
   mqtt_host: str
   mqtt_port: int
   mqtt_user: str?
   mqtt_pass: str?
-  poll_interval: int
-  home_names: str
+
+  poll_interval: int(2,60)
+
+  home_names:
+    - str
