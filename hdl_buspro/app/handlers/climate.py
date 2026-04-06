@@ -92,4 +92,3 @@ def handle_climate_command(device, payload):
         return {"key": "on_off", "value": "on" if raw_value in ["on", "1", "true"] else "off"}
 
     return None
-1

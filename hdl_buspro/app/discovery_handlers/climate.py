@@ -61,4 +61,3 @@ def build(device):
             "temp_step": 1,
         },
     }
-1

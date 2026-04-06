@@ -23,4 +23,3 @@ def publish(mqtt, uid, status, device):
         payload,
         retain=True,
     )
-    1

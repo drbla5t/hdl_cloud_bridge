@@ -94,4 +94,3 @@ DEVICE_REGISTRY = {
         "discovery": disc_generic.build,
     },
 }
-1

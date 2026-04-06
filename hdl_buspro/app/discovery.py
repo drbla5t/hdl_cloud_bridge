@@ -91,4 +91,3 @@ class Discovery:
                 info["suggested_area"] = room_name
 
         return info
-    1

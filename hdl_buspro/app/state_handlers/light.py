@@ -30,4 +30,3 @@ def publish(mqtt, uid, status, device):
             pass
 
     mqtt.publish(f"hdl/{uid}/state", payload, retain=True)
-    1

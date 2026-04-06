@@ -52,4 +52,3 @@ def build(device):
         "topic": f"homeassistant/light/hdl_{uid}/config",
         "payload": payload,
     }
-1

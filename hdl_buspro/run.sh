@@ -23,4 +23,3 @@ echo "Poll interval: ${POLL_INTERVAL}"
 echo "Home names: ${HDL_HOME_NAMES}"
 
 python3 -m app.main
-1

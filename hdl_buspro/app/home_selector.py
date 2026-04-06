@@ -85,4 +85,3 @@ def select_homes(all_homes, home_names):
         print(f" - {h['homeName']} ({h['homeId']})")
 
     return selected
-1

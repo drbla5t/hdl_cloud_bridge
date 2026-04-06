@@ -29,4 +29,3 @@ def handle_curtain_command(device, payload):
         "key": "on_off",
         "value": value,
     }
-1
