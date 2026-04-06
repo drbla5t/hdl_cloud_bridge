@@ -51,15 +51,25 @@ class MQTTBridge:
             "position/set": "position_set",
         }
 
+        parsed_json = None
+        try:
+            parsed_json = json.loads(payload_raw)
+        except Exception:
+            parsed_json = None
+
         if subtopic in action_map:
-            payload = {
-                "value": payload_raw,
-                "_topic_action": action_map[subtopic],
-            }
+            if isinstance(parsed_json, dict):
+                payload = dict(parsed_json)
+                payload["_topic_action"] = action_map[subtopic]
+            else:
+                payload = {
+                    "value": payload_raw,
+                    "_topic_action": action_map[subtopic],
+                }
         else:
-            try:
-                payload = json.loads(payload_raw)
-            except Exception:
+            if isinstance(parsed_json, dict):
+                payload = parsed_json
+            else:
                 return
 
         print(f"CMD: {device_uid} {payload}")

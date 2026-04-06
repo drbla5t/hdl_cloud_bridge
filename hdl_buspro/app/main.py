@@ -43,6 +43,35 @@ class App:
                 d["_home_name"] = home_name
                 self.device_index[uid] = d
 
+    def refresh_home_devices(self, home_id):
+        target_home = None
+        for home in self.selected_homes:
+            if home["homeId"] == home_id:
+                target_home = home
+                break
+
+        if not target_home:
+            return
+
+        home_name = target_home["homeName"]
+        devices = self.hdl.get_devices(home_id)
+
+        to_delete = [
+            uid for uid, d in self.device_index.items()
+            if d.get("_home_id") == home_id
+        ]
+        for uid in to_delete:
+            del self.device_index[uid]
+
+        for d in devices:
+            uid = d.get("deviceIotId") or d.get("deviceId")
+            if not uid:
+                continue
+
+            d["_home_id"] = home_id
+            d["_home_name"] = home_name
+            self.device_index[uid] = d
+
     def handle_command(self, device_uid, payload):
         device = self.device_index.get(device_uid)
         if not device:
@@ -69,6 +98,11 @@ class App:
                 key=cmd["key"],
                 value=cmd["value"],
             )
+
+            # быстрый refresh только по дому устройства
+            self.refresh_home_devices(device["_home_id"])
+            self.publish_states()
+
         except Exception as e:
             print(f"Command send failed: {e}")
 
