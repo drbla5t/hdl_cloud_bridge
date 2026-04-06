@@ -51,7 +51,8 @@ mqtt_port: 1883
 mqtt_user: ""
 mqtt_pass: ""
 poll_interval: 10
-home_names: "[\"YourHomeName\"]"
+home_names:
+  - your_home_name
 ```
 
 hdl_server names:
