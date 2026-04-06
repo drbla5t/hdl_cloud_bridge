@@ -61,13 +61,16 @@ class App:
             f"key={cmd['key']} value={cmd['value']}"
         )
 
-        self.hdl.control(
-            home_id=device["_home_id"],
-            gateway_id=device["gatewayId"],
-            device=device,
-            key=cmd["key"],
-            value=cmd["value"],
-        )
+        try:
+            self.hdl.control(
+                home_id=device["_home_id"],
+                gateway_id=device["gatewayId"],
+                device=device,
+                key=cmd["key"],
+                value=cmd["value"],
+            )
+        except Exception as e:
+            print(f"Command send failed: {e}")
 
     def publish_discovery(self):
         for device in self.device_index.values():
@@ -77,7 +80,7 @@ class App:
         for device in self.device_index.values():
             self.state_publisher.publish(device)
 
-    def start(self):
+    def initial_load(self):
         self.hdl.login()
 
         all_homes = self.hdl.get_homes()
@@ -89,13 +92,25 @@ class App:
 
         self.rebuild_device_index()
 
+    def start(self):
+        self.initial_load()
+
         self.mqtt.connect()
         self.publish_discovery()
         self.publish_states()
 
         while True:
-            self.rebuild_device_index()
-            self.publish_states()
+            try:
+                self.rebuild_device_index()
+                self.publish_states()
+            except Exception as e:
+                print(f"Polling error: {e}")
+                try:
+                    print("Trying to relogin...")
+                    self.hdl.login()
+                except Exception as login_error:
+                    print(f"Relogin failed: {login_error}")
+
             time.sleep(config.POLL_INTERVAL)
 
 

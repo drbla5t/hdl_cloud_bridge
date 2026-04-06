@@ -71,45 +71,69 @@ class HDLClient:
         print("🔐 Login...")
         last_error = None
 
+        login_variants = [
+            {
+                "account": self.username,
+                "password": self.password,
+                "grantType": "password",
+            },
+            {
+                "account": self.username,
+                "password": self.password,
+                "grant_type": "password",
+            },
+            {
+                "account": self.username,
+                "password": self.password,
+                "authType": "password",
+            },
+            {
+                "account": self.username,
+                "password": self.password,
+                "loginType": "password",
+            },
+            {
+                "account": self.username,
+                "password": self.password,
+            },
+        ]
+
         for server in self._server_candidates():
-            try:
-                self.base_url = server.rstrip("/")
-                print(f"Trying HDL server: {self.base_url}")
+            self.base_url = server.rstrip("/")
+            print(f"Trying HDL server: {self.base_url}")
 
-                url = f"{self.base_url}/smart-footstone/member/oauth/login"
-                payload = _sign({
-                    "account": self.username,
-                    "password": self.password,
-                })
+            for payload_base in login_variants:
+                try:
+                    url = f"{self.base_url}/smart-footstone/member/oauth/login"
+                    payload = _sign(payload_base)
 
-                resp = self.session.post(
-                    url,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                    timeout=30,
-                )
-                print(f"/smart-footstone/member/oauth/login -> {resp.status_code}")
+                    resp = self.session.post(
+                        url,
+                        json=payload,
+                        headers={"Content-Type": "application/json"},
+                        timeout=30,
+                    )
+                    print(f"/smart-footstone/member/oauth/login -> {resp.status_code}")
 
-                data = resp.json()
+                    data = resp.json()
 
-                if data.get("code") != 0:
+                    if data.get("code") == 0:
+                        token_data = data["data"]
+                        self.access_token = token_data.get("accessToken")
+                        self.refresh_token = token_data.get("refreshToken")
+                        self.header_prefix = token_data.get("headerPrefix") or "Bearer "
+                        if not self.header_prefix.endswith(" "):
+                            self.header_prefix += " "
+
+                        print(f"✅ Logged in via {self.base_url}")
+                        return
+
                     last_error = data
-                    print(f"Login failed on {self.base_url}: {data}")
-                    continue
+                    print(f"Login variant failed: {payload_base} -> {data}")
 
-                token_data = data["data"]
-                self.access_token = token_data.get("accessToken")
-                self.refresh_token = token_data.get("refreshToken")
-                self.header_prefix = token_data.get("headerPrefix") or "Bearer "
-                if not self.header_prefix.endswith(" "):
-                    self.header_prefix += " "
-
-                print(f"✅ Logged in via {self.base_url}")
-                return
-
-            except Exception as e:
-                last_error = e
-                print(f"Login error on {server}: {e}")
+                except Exception as e:
+                    last_error = e
+                    print(f"Login error with payload {payload_base}: {e}")
 
         raise RuntimeError(f"HDL login failed: {last_error}")
 
