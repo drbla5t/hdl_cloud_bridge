@@ -183,6 +183,29 @@ class HDLClient:
             raise RuntimeError(f"get_devices failed: {data}")
         return data.get("data", {}).get("list", [])
 
+    def get_mqtt_info(self, home_id, attach_client_id, home_type="BUSPRO", device_uuid=""):
+        data = self._request(
+            "POST",
+            "/home-wisdom/app/mqtt/getRemoteInfo",
+            json_data={
+                "homeId": home_id,
+                "attachClientId": attach_client_id,
+                "homeType": home_type,
+                "deviceUuid": device_uuid,
+            },
+        )
+
+        if data.get("code") != 0:
+            raise RuntimeError(f"get_mqtt_info failed: {data}")
+
+        info = data.get("data") or {}
+        required = ["url", "clientId", "userName", "passWord"]
+        for key in required:
+            if not info.get(key):
+                raise RuntimeError(f"Invalid MQTT info: missing {key} in {info}")
+
+        return info
+
     def control(self, home_id, gateway_id, device, attrs):
         prepared_attrs = []
 

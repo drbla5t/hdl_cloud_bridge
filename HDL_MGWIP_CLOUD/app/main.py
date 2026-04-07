@@ -7,6 +7,7 @@ from app.discovery import Discovery
 from app.command_router import CommandRouter
 from app.home_selector import select_homes
 from app.state_publisher import StatePublisher
+from app.hdl_realtime import HDLRealtimeManager
 
 
 class App:
@@ -21,12 +22,15 @@ class App:
         self.discovery = Discovery(self.mqtt)
         self.state_publisher = StatePublisher(self.mqtt)
         self.command_router = CommandRouter()
+        self.realtime = HDLRealtimeManager(self.hdl, self.handle_realtime_event)
 
         self.selected_homes = []
         self.device_index = {}
+        self.sid_index = {}
 
     def rebuild_device_index(self):
         self.device_index = {}
+        self.sid_index = {}
 
         for home in self.selected_homes:
             home_id = home["homeId"]
@@ -42,6 +46,10 @@ class App:
                 d["_home_id"] = home_id
                 d["_home_name"] = home_name
                 self.device_index[uid] = d
+
+                sid = d.get("sid")
+                if sid:
+                    self.sid_index[sid] = d
 
     def refresh_home_devices(self, home_id):
         target_home = None
@@ -61,7 +69,9 @@ class App:
             if d.get("_home_id") == home_id
         ]
         for uid in to_delete:
-            del self.device_index[uid]
+            dev = self.device_index.pop(uid, None)
+            if dev and dev.get("sid") in self.sid_index:
+                self.sid_index.pop(dev.get("sid"), None)
 
         for d in devices:
             uid = d.get("deviceIotId") or d.get("deviceId")
@@ -71,6 +81,10 @@ class App:
             d["_home_id"] = home_id
             d["_home_name"] = home_name
             self.device_index[uid] = d
+
+            sid = d.get("sid")
+            if sid:
+                self.sid_index[sid] = d
 
     def handle_command(self, device_uid, payload):
         device = self.device_index.get(device_uid)
@@ -103,10 +117,6 @@ class App:
                 attrs=attrs,
             )
 
-            # быстрый refresh только по дому устройства
-            self.refresh_home_devices(device["_home_id"])
-            self.publish_states()
-
         except Exception as e:
             print(f"Command send failed: {e}")
 
@@ -117,6 +127,9 @@ class App:
     def publish_states(self):
         for device in self.device_index.values():
             self.state_publisher.publish(device)
+
+    def publish_device_state(self, device):
+        self.state_publisher.publish(device)
 
     def initial_load(self):
         self.hdl.login()
@@ -130,6 +143,115 @@ class App:
 
         self.rebuild_device_index()
 
+    def _status_list_to_dict(self, status_items):
+        result = {}
+        if not isinstance(status_items, list):
+            return result
+
+        for item in status_items:
+            if not isinstance(item, dict):
+                continue
+            key = item.get("key")
+            if key is None:
+                continue
+            result[key] = item.get("value")
+        return result
+
+    def _merge_status(self, device, new_status_items):
+        if not isinstance(new_status_items, list):
+            return False
+
+        current_list = device.get("status") or []
+        current_map = self._status_list_to_dict(current_list)
+        changed = False
+
+        for item in new_status_items:
+            if not isinstance(item, dict):
+                continue
+
+            key = item.get("key")
+            value = item.get("value")
+
+            if key is None:
+                continue
+
+            if current_map.get(key) != value:
+                current_map[key] = value
+                changed = True
+
+        if changed:
+            device["status"] = [
+                {"key": k, "value": v}
+                for k, v in current_map.items()
+            ]
+
+        return changed
+
+    def _set_online_by_sid(self, sid, online_value):
+        device = self.sid_index.get(sid)
+        if not device:
+            return
+
+        old = bool(device.get("online"))
+        new = bool(online_value)
+
+        if old != new:
+            device["online"] = new
+            self.publish_device_state(device)
+
+    def handle_realtime_event(self, home_id, topic, data):
+        try:
+            if not isinstance(data, dict):
+                return
+
+            if data.get("type") == "home_refresh":
+                print(f"HDL realtime refresh requested for home={home_id}")
+                self.refresh_home_devices(home_id)
+                self.publish_states()
+                return
+
+            objects = data.get("objects") or []
+
+            if topic.endswith("/app/son/session/online"):
+                for obj in objects:
+                    sid = obj.get("sid")
+                    if not sid:
+                        continue
+
+                    raw_online = (
+                        obj.get("online")
+                        or obj.get("isOnline")
+                        or obj.get("value")
+                        or obj.get("status")
+                    )
+
+                    online = str(raw_online).lower() in ("1", "true", "online", "on")
+                    self._set_online_by_sid(sid, online)
+                return
+
+            if topic.endswith("/app/thing/property/send"):
+                for obj in objects:
+                    sid = obj.get("sid")
+                    if not sid:
+                        continue
+
+                    device = self.sid_index.get(sid)
+                    if not device:
+                        continue
+
+                    status_items = obj.get("status") or []
+                    if self._merge_status(device, status_items):
+                        self.publish_device_state(device)
+                return
+
+            # для остальных realtime событий пока просто мягкий refresh дома
+            print(f"HDL realtime other topic -> refresh home: {topic}")
+            self.refresh_home_devices(home_id)
+            self.publish_states()
+
+        except Exception as e:
+            print(f"Realtime event handle error: {e}")
+
     def start(self):
         self.initial_load()
 
@@ -137,12 +259,17 @@ class App:
         self.publish_discovery()
         self.publish_states()
 
+        try:
+            self.realtime.start_for_homes(self.selected_homes)
+        except Exception as e:
+            print(f"Realtime start error: {e}")
+
         while True:
             try:
                 self.rebuild_device_index()
                 self.publish_states()
             except Exception as e:
-                print(f"Polling error: {e}")
+                print(f"Fallback sync error: {e}")
                 try:
                     print("Trying to relogin...")
                     self.hdl.login()
