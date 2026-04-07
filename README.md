@@ -36,6 +36,7 @@ Use at your own risk.
 
 ## 📦 Installation (Home Assistant Add-on)
 
+1. Install **Mosquitto broker**
 1. Add this repository to Home Assistant:
 Settings → Add-ons → Add-on Store → ⋮ → Repositories
 2. Install **HDL Buspro Bridge**
