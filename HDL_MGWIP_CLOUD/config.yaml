@@ -1,9 +1,9 @@
-name: HDL Buspro Bridge
-version: "1.2.0"
-slug: hdl_buspro
+name: HDL MGWIP Cloud Bridge
+version: "0.9.0"
+slug: HDL_MGWIP_CLOUD
 
 description: >
-  Bridge between HDL Buspro Cloud and Home Assistant via MQTT.
+  Bridge between HDL MGWIP Cloud and Home Assistant via MQTT.
   Supports lights, curtains, HVAC (AC & floor heating) with auto-discovery.
 
 startup: services
@@ -16,7 +16,7 @@ arch:
   - armv7
 
 panel_icon: mdi:home-automation
-panel_title: HDL Buspro
+panel_title: HDL Cloud
 
 options:
   hdl_user: ""
