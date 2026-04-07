@@ -1,6 +1,6 @@
 name: HDL MGWIP Cloud Bridge
 version: "1.0.0"
-slug: HDL_MGWIP_CLOUD
+slug: folder
 
 description: >
   Bridge between HDL MGWIP Cloud and Home Assistant via MQTT.
@@ -14,6 +14,8 @@ arch:
   - amd64
   - aarch64
   - armv7
+
+url: https://github.com/drbla5t/hdl_cloud_bridge/blob/main/README.md
 
 panel_icon: mdi:home-automation
 panel_title: HDL Cloud
