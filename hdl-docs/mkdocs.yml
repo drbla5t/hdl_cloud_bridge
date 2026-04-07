@@ -1,0 +1,12 @@
+site_name: HDL Documentation
+theme:
+  name: material
+
+nav:
+  - Главная: index.md
+  - Создание аккаунта: 01-account.md
+  - Создание проекта: 02-project.md
+  - Настройка сети: 03-network.md
+  - Передача доступа: 04-access.md
+  - Яндекс Алиса: 05-alice.md
+  - Обслуживание: 06-maintenance.md

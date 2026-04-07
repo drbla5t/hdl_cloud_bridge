@@ -64,6 +64,9 @@ china: - China
 
 4.	Start the add-on
 
+## 📦 Полная инструкция
+![Инструкция](src="hdl-docs/docs/index.md")
+
 ## ☕ Support the project
 
 <p align="center">
