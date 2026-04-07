@@ -1,0 +1,52 @@
+name: HDL MGWIP Cloud Bridge
+version: "1.1.0"
+slug: folder
+
+description: >
+  Bridge between HDL MGWIP Cloud and Home Assistant via MQTT.
+  Supports lights, curtains, HVAC (AC & floor heating) with auto-discovery.
+
+startup: services
+boot: auto
+init: false
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+url: https://github.com/drbla5t/hdl_cloud_bridge/blob/main/README.md
+
+panel_icon: mdi:home-automation
+panel_title: HDL Cloud
+
+options:
+  hdl_user: ""
+  hdl_pass: ""
+
+  hdl_server: "ru"
+
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_user: ""
+  mqtt_pass: ""
+
+  poll_interval: 10
+
+  home_names: []
+
+schema:
+  hdl_user: str
+  hdl_pass: str
+
+  hdl_server: list(ru|china|bahrain)
+
+  mqtt_host: str
+  mqtt_port: int
+  mqtt_user: str?
+  mqtt_pass: str?
+
+  poll_interval: int(2,60)
+
+  home_names:
+    - str
