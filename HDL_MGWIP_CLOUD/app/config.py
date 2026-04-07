@@ -9,7 +9,8 @@ MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_USER = os.getenv("MQTT_USER", "")
 MQTT_PASS = os.getenv("MQTT_PASS", "")
 
-POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "15"))
+# fallback sync, а не основной способ обновления
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
 
 HDL_SERVERS = {
     "ru": "https://ru-gateway.hdlcontrol.com",
